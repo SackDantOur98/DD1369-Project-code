@@ -55,7 +55,7 @@ async def run():
     await drone.action.goto_location(new_latitude, home_longitude, flying_alt, 0)
 
     '''
-    The while loop below is used to check every ten seconds whether the drone 
+    The while loop below is used to check every five seconds whether the drone 
     has reached the target position or not. 
     '''
     checkAgain = True
@@ -82,7 +82,7 @@ async def run():
             checkAgain = False
 
         print("current: " + str(current_latitude_round) + "!! home: " + str(new_latitude_round))
-        'Comment: Ensure the loop only checks once every 5 seconds.'
+        'Comment: Ensure the loop only checks once every five seconds.'
         await asyncio.sleep(5)
 
     print("-- Returning home.")
