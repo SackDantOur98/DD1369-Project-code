@@ -4,7 +4,7 @@ from mavsdk import System
 import math
 
 
-async def run():
+async def prepare_before_run():
     current_location = "E"
     fly_to_new_location = False
     location_E = [59.347372137351705, 18.073428604055536]
@@ -33,6 +33,30 @@ async def run():
     flying_alt = absolute_altitude + 100
 
     repeat = True
+    await run(drone, current_location, fly_to_new_location, location_E, location_Q, location_M, repeat,
+              flying_alt)
+
+
+async def get_GPS(drone, type_of_GPS):
+    if type_of_GPS == "latitude":
+        async for terrain_info in drone.telemetry.position():
+            current_latitude = terrain_info.latitude_deg
+            break
+        return current_latitude
+    elif type_of_GPS == "longitude":
+        async for terrain_info in drone.telemetry.position():
+            current_longitude = terrain_info.longitude_deg
+            break
+        return current_longitude
+    elif type_of_GPS == "altitude":
+        async for terrain_info in drone.telemetry.position():
+            current_altitude = terrain_info.relative_altitude_m
+            break
+        return current_altitude
+
+
+async def run(drone, current_location, fly_to_new_location, location_E, location_Q, location_M, repeat,
+              flying_alt):
     while repeat:
         while not fly_to_new_location:
 
@@ -62,15 +86,8 @@ async def run():
         print("-- Taking off")
         await drone.action.takeoff()
 
-        print("Getting current latitude.")
-        async for terrain_info in drone.telemetry.position():
-            current_latitude = terrain_info.latitude_deg
-            break
-
-        print("Getting current longitude.")
-        async for terrain_info in drone.telemetry.position():
-            current_longitude = terrain_info.longitude_deg
-            break
+        current_latitude = await get_GPS(drone, "latitude")
+        current_longitude = await get_GPS(drone, "longitude")
 
         print("reaching desired altitude")
         await drone.action.goto_location(current_latitude, current_longitude, flying_alt, 0)
@@ -78,9 +95,7 @@ async def run():
         check_again = True
         while check_again:
             await asyncio.sleep(5)
-            async for terrain_info in drone.telemetry.position():
-                current_altitude = terrain_info.relative_altitude_m
-                break
+            current_altitude = await get_GPS(drone, "altitude")
 
             if current_altitude > 99:
                 check_again = False
@@ -101,13 +116,8 @@ async def run():
         while check_again:
             await asyncio.sleep(5)
 
-            async for terrain_info in drone.telemetry.position():
-                current_latitude = terrain_info.latitude_deg
-                break
-
-            async for terrain_info in drone.telemetry.position():
-                current_longitude = terrain_info.longitude_deg
-                break
+            current_latitude = await get_GPS(drone, "latitude")
+            current_longitude = await get_GPS(drone, "longitude")
 
             current_latitude = round(current_latitude, 6)
             current_longitude = round(current_longitude, 6)
@@ -122,9 +132,7 @@ async def run():
         check_again = True
         while check_again:
             await asyncio.sleep(5)
-            async for terrain_info in drone.telemetry.position():
-                current_altitude = terrain_info.relative_altitude_m
-                break
+            current_altitude = await get_GPS(drone, "altitude")
 
             if current_altitude < 1:
                 current_location = new_location
@@ -141,4 +149,4 @@ async def run():
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(run())
+    loop.run_until_complete(prepare_before_run())
