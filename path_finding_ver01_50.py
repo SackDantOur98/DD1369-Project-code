@@ -191,7 +191,6 @@ async def run(drone, current_location, fly_to_new_location, location_E, location
             save_actual_lat_long = [location_M[0], location_M[1]]
             await drone.action.goto_location(location_M[0], location_M[1], flying_alt, 0)
 
-        increase = 0
         check_again = True
         while check_again:
             await asyncio.sleep(0.2)
@@ -205,9 +204,6 @@ async def run(drone, current_location, fly_to_new_location, location_E, location
             if 10 < battery_percentage < 30:
                 if coordinates_to_circumvent[2] == 1:
                     low_battery_and_one_area = True
-
-            increase = increase + 1
-            print(increase)
 
             if coordinates_to_circumvent is None or low_battery_and_one_area:
                 current_latitude = await get_GPS(drone, "latitude")
