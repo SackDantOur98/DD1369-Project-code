@@ -4,7 +4,13 @@ from mavsdk import System
 
 import math
 
+'How far will the drone fly back when getting close to an obstacle?'
 back_force = 0.15
+'How many meters into the air should the drone fly after taking off?'
+meters_above_the_ground = 115
+'''How close (in meters) can the drone get to an obstacle point without 
+triggering evasive maneuvers?'''
+distance_to_obstacle = 60
 
 
 async def get_battery_percentage(drone):
@@ -12,7 +18,9 @@ async def get_battery_percentage(drone):
         return battery.remaining_percent * 100
 
 
-async def circumvent_obstacle(drone, obstacle_coordinates, flying_alt, save_actual_lat_long):
+async def circumvent_obstacle(drone, obstacle_coordinates, flying_alt,
+                              save_actual_lat_long):
+
     current_latitude = await get_GPS(drone, "latitude")
     current_longitude = await get_GPS(drone, "longitude")
 
@@ -55,7 +63,7 @@ async def check_distance(drone, obstacle_coordinates):
         obstacle_point = (obstacle_coordinate[0], obstacle_coordinate[1])
         drone_point = (current_drone_latitude, current_drone_longitude)
 
-        if geopy.distance.distance(obstacle_point, drone_point).m < 60:
+        if geopy.distance.distance(obstacle_point, drone_point).m < distance_to_obstacle:
             return obstacle_coordinate
 
 
@@ -70,8 +78,8 @@ async def prepare_before_run():
     - Add areas the drone may not fly here. Use Google Maps to get
     latitude and longitude of a point and add the values to the array
     like shown below.
-    - The drone will remain at least 40 meters from the points, when
-    flying to a new location.
+    - The drone will remain at least (distance_to_obstacle-10) meters 
+    from the points, when flying to a new location.
 
     - Set the third value to 0 if you'd like the drone to avoid the
     area at any cost, or 1 to allow the drone to fly over it should
@@ -80,7 +88,7 @@ async def prepare_before_run():
     - The first array contains the coordinates for the KTH library. 
     The other two are different endings of the B-building. 
     '''
-    obstacle_coordinates = [[59.348001208303316, 18.072331990932845, 0],
+    obstacle_coordinates = [[59.34793726127935, 18.07243946591602, 0],
                             [59.35143519236325, 18.068350939024356, 0],
                             [59.351822930674935, 18.067727834435626, 0]]
 
@@ -105,7 +113,14 @@ async def prepare_before_run():
     async for terrain_info in drone.telemetry.home():
         absolute_altitude = terrain_info.absolute_altitude_m
         break
-    flying_alt = absolute_altitude + 100
+    flying_alt = absolute_altitude + meters_above_the_ground
+
+    '''
+    battery = await get_battery_percentage(drone)
+    if battery < 99:
+        print("Battery not at 100 percent. Exiting script.")
+        exit()
+    '''
 
     repeat = True
     await run(drone, current_location, fly_to_new_location, location_E, location_Q, location_M, repeat,
@@ -133,6 +148,7 @@ async def get_GPS(drone, type_of_GPS):
 async def run(drone, current_location, fly_to_new_location, location_E, location_Q, location_M, repeat,
               flying_alt, obstacle_coordinates):
     while repeat:
+
         while not fly_to_new_location:
 
             print("Chose a new location to fly to.")
@@ -172,24 +188,24 @@ async def run(drone, current_location, fly_to_new_location, location_E, location
             await asyncio.sleep(5)
             current_altitude = await get_GPS(drone, "altitude")
 
-            if current_altitude > 99:
+            if current_altitude > meters_above_the_ground-1:
                 check_again = False
 
         print("-- Flying to location " + '"' + new_location + '"')
-        save_lat_long = []
+        save_rounded_lat_long = []
         save_actual_lat_long = []
         if new_location == "E":
-            save_lat_long = [round(location_E[0], 6), round(location_E[1], 6)]
+            save_rounded_lat_long = [round(location_E[0], 6), round(location_E[1], 6)]
             save_actual_lat_long = [location_E[0], location_E[1]]
-            await drone.action.goto_location(location_E[0], location_E[1], flying_alt, 0)
         elif new_location == "Q":
-            save_lat_long = [round(location_Q[0], 6), round(location_Q[1], 6)]
+            save_rounded_lat_long = [round(location_Q[0], 6), round(location_Q[1], 6)]
             save_actual_lat_long = [location_Q[0], location_Q[1]]
-            await drone.action.goto_location(location_Q[0], location_Q[1], flying_alt, 0)
         elif new_location == "M":
-            save_lat_long = [round(location_M[0], 6), round(location_M[1], 6)]
+            save_rounded_lat_long = [round(location_M[0], 6), round(location_M[1], 6)]
             save_actual_lat_long = [location_M[0], location_M[1]]
-            await drone.action.goto_location(location_M[0], location_M[1], flying_alt, 0)
+
+        await drone.action.goto_location(save_actual_lat_long[0],
+                                         save_actual_lat_long[1], flying_alt, 0)
 
         check_again = True
         while check_again:
@@ -212,8 +228,8 @@ async def run(drone, current_location, fly_to_new_location, location_E, location
                 current_latitude = round(current_latitude, 6)
                 current_longitude = round(current_longitude, 6)
 
-                if math.isclose(current_latitude, save_lat_long[0]) and math.isclose(current_longitude,
-                                                                                     save_lat_long[1]):
+                if math.isclose(current_latitude, save_rounded_lat_long[0]) and \
+                        math.isclose(current_longitude, save_rounded_lat_long[1]):
                     check_again = False
             else:
                 await circumvent_obstacle(drone, coordinates_to_circumvent, flying_alt,
