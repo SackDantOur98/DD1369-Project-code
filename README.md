@@ -41,7 +41,7 @@ Important: If the drone is in the air when you run the code you will get an erro
 
 ***To keep in mind***
 
-This is something we didn't discover until after finishing the project. We tested the obstacle avoidance algorithm on 10 times the normal simulation speed. The problem is that the algorithm is based on time (timed events) rather than distance, meaning a slower simulation will *dramatically* slow down the drone when flying around an obstacle. For this reason it is highly advised that you speed up the simulation by 10 using 'export PX4_SIM_SPEED_FACTOR=10' – as explained and shown above – before running it.  
+This is something we didn't discover until after finishing the project. We tested the obstacle avoidance algorithm on 10 times the normal simulation speed. The problem is that the algorithm is based on time (timed events) rather than distance, meaning a slower simulation will *dramatically* slow down the drone when flying around an obstacle. For this reason it is highly advised that you speed up the simulation by 10 using `export PX4_SIM_SPEED_FACTOR=10` – as explained and shown above – before running it.  
 
 ***Bugs***
 
