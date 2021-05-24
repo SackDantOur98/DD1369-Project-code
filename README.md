@@ -8,7 +8,7 @@ Our project: We are to create a system that will allow a drone to fly from one p
 
 ***Starting a simulation***
 
-Run the simulation using the usual "make px4_sitl <type of simulator>" command. (Of course you need to download all necessary programs first. How to do this is detailed here: https://docs.px4.io/master/en/dev_setup/dev_env.html and https://docs.px4.io/master/en/dev_setup/building_px4.html)
+Run the simulation using the usual "make px4_sitl (Name of simulator)" command. (Of course you need to download all necessary programs first. How to do this is detailed here: https://docs.px4.io/master/en/dev_setup/dev_env.html and https://docs.px4.io/master/en/dev_setup/building_px4.html)
 
 Important: The simulation will not work as intended unless it starts in a specific location, so *before* running the simulation, type the following into the terminal:
 
